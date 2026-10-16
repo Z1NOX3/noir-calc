@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoirCalc — Glass Calculator</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: dark;
+  --glass: rgba(255,255,255,.065);
+  --line: rgba(255,255,255,.13);
+  --white: #f8f8f8;
+  --muted: #929292;
+}
+
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse at 50% 42%, #242424 0%, #111 42%, #030303 82%);
+  color: var(--white);
+  font-family: -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: .13;
+  pointer-events: none;
+}
+
+body::before {
+  background: white;
+  top: -170px;
+  left: -120px;
+}
+
+body::after {
+  background: #aaa;
+  bottom: -180px;
+  right: -100px;
+}
+
+.app {
+  width: min(100%, 390px);
+  position: relative;
+  z-index: 1;
+  animation: arrive .65s cubic-bezier(.2,.75,.25,1) both;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 4px 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 24px #ffffff0b;
+  font-size: 20px;
+}
+
+.brand h1 {
+  font-size: 17px;
+  letter-spacing: -.5px;
+}
+
+.brand p {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+  letter-spacing: 1.8px;
+}
+
+.status {
+  color: #ccc;
+  border: 1px solid var(--line);
+  background: #ffffff08;
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+}
+
+.status::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #eee;
+  border-radius: 50%;
+  margin-right: 6px;
+  box-shadow: 0 0 9px white;
+}
+
+.calculator {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #ffffff25;
+  border-radius: 32px;
+  padding: 20px;
+  background: linear-gradient(
+    150deg,
+    rgba(255,255,255,.115),
+    rgba(255,255,255,.035) 48%,
+    rgba(255,255,255,.065)
+  );
+  backdrop-filter: blur(36px) saturate(135%);
+  -webkit-backdrop-filter: blur(36px) saturate(135%);
+  box-shadow:
+    0 32px 90px #000b,
+    inset 0 1px 0 #ffffff30,
+    inset 0 -1px 0 #ffffff08,
+    0 0 55px #ffffff08;
+}
+
+.calculator::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, #ffffff0c, transparent 32%, transparent 72%, #ffffff08);
+  pointer-events: none;
+}
+
+.display {
+  min-height: 148px;
+  padding: 12px 4px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.display-label {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+
+.expression {
+  max-width: 100%;
+  min-height: 23px;
+  color: #aaa;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.result {
+  max-width: 100%;
+  margin-top: 5px;
+  font-size: clamp(40px, 11vw, 54px);
+  font-weight: 300;
+  letter-spacing: -2px;
+  overflow-wrap: anywhere;
+  text-align: right;
+  text-shadow: 0 0 28px #ffffff15;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+button {
+  min-width: 0;
+  aspect-ratio: 1.16;
+  border: 1px solid #ffffff16;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #ffffff11, #ffffff08);
+  color: white;
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform .13s ease,
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+  box-shadow: inset 0 1px 0 #ffffff10, 0 5px 14px #0002;
+}
+
+button:hover {
+  background: linear-gradient(145deg, #ffffff20, #ffffff10);
+  border-color: #ffffff30;
+  box-shadow: 0 0 20px #ffffff0a;
+}
+
+button:active {
+  transform: scale(.93);
+  background: #ffffff22;
+}
+
+button.utility {
+  color: #e2e2e2;
+  background: linear-gradient(145deg, #ffffff19, #ffffff0e);
+  font-size: 16px;
+}
+
+button.operator {
+  background: linear-gradient(145deg, #fff, #e4e4e4);
+  color: #080808;
+  border-color: white;
+  font-size: 25px;
+  box-shadow: inset 0 1px 0 #fff, 0 6px 18px #0003, 0 0 22px #ffffff12;
+}
+
+button.operator:hover {
+  background: white;
+  box-shadow: 0 0 28px #ffffff30;
+}
+
+button.equals {
+  background: linear-gradient(145deg, #fff, #cfcfcf);
+  color: black;
+  font-size: 25px;
+  box-shadow: inset 0 1px 0 #fff, 0 6px 18px #0003, 0 0 25px #ffffff20;
+}
+
+button.zero {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  text-align: left;
+  padding-left: 27px;
+}
+
+button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 17px 5px 0;
+  color: #777;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 360px) {
+  body {
+    padding: 18px 14px;
+  }
+
+  .calculator {
+    padding: 15px;
+    border-radius: 25px;
+  }
+
+  .keys {
+    gap: 7px;
+  }
+
+  button {
+    border-radius: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
+
+  .app {
+    animation: none;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">◈</div>
+      <div>
+        <h1>NoirCalc</h1>
+        <p>GLASS EDITION</p>
+      </div>
+    </div>
+    <div class="status">READY</div>
+  </header>
+
+  <section class="calculator" aria-label="Calculator">
+    <div class="display" aria-live="polite">
+      <div class="display-label">CALCULATION</div>
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="keys">
+      <button class="utility" data-action="clear">AC</button>
+      <button class="utility" data-action="sign">+/−</button>
+      <button class="utility" data-action="percent">%</button>
+      <button class="operator" data-action="operator" data-value="/">÷</button>
+
+      <button data-action="digit" data-value="7">7</button>
+      <button data-action="digit" data-value="8">8</button>
+      <button data-action="digit" data-value="9">9</button>
+      <button class="operator" data-action="operator" data-value="*">×</button>
+
+      <button data-action="digit" data-value="4">4</button>
+      <button data-action="digit" data-value="5">5</button>
+      <button data-action="digit" data-value="6">6</button>
+      <button class="operator" data-action="operator" data-value="-">−</button>
+
+      <button data-action="digit" data-value="1">1</button>
+      <button data-action="digit" data-value="2">2</button>
+      <button data-action="digit" data-value="3">3</button>
+      <button class="operator" data-action="operator" data-value="+">+</button>
+
+      <button class="zero" data-action="digit" data-value="0">0</button>
+      <button data-action="decimal">.</button>
+      <button class="equals" data-action="equals">=</button>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>DESIGNED IN MONOCHROME</span>
+    <span>◌ 01 / 01</span>
+  </footer>
+</main>
+
+<script>
+const resultEl = document.getElementById("result");
+const expressionEl = document.getElementById("expression");
+
+let current = "0";
+let stored = null;
+let operator = null;
+let waitingForNumber = false;
+let justCalculated = false;
+let previousExpression = "";
+
+function format(value) {
+  if (!Number.isFinite(value)) return "Error";
+  if (Object.is(value, -0)) value = 0;
+
+  const rounded = Number(value.toPrecision(10));
+  const text = String(rounded);
+
+  return text.length > 15
+    ? rounded.toExponential(5)
+    : text;
+}
+
+function render() {
+  resultEl.textContent = current;
+  expressionEl.textContent = previousExpression ||
+    (stored !== null && operator
+      ? `${format(stored)} ${symbol(operator)}`
+      : "");
+}
+
+function symbol(op) {
+  return ({ "+": "+", "-": "−", "*": "×", "/": "÷" })[op];
+}
+
+function clearAll() {
+  current = "0";
+  stored = null;
+  operator = null;
+  waitingForNumber = false;
+  justCalculated = false;
+  previousExpression = "";
+  render();
+}
+
+function inputDigit(digit) {
+  if (current === "Error" || justCalculated) {
+    current = digit;
+    justCalculated = false;
+    previousExpression = "";
+    stored = null;
+    operator = null;
+    waitingForNumber = false;
+    render();
+    return;
+  }
+
+  if (waitingForNumber) {
+    current = digit;
+    waitingForNumber = false;
+  } else if (current.replace("-", "").length < 14) {
+    current = current === "0" ? digit : current + digit;
+  }
+
+  render();
+}
+
+function inputDecimal() {
+  if (current === "Error" || justCalculated || waitingForNumber) {
+    current = "0.";
+    waitingForNumber = false;
+    justCalculated = false;
+    previousExpression = "";
+  } else if (!current.includes(".")) {
+    current += ".";
+  }
+  render();
+}
+
+function calculate(a, b, op) {
+  switch (op) {
+    case "+": return a + b;
+    case "-": return a - b;
+    case "*": return a * b;
+    case "/": return b === 0 ? NaN : a / b;
+    default: return b;
+  }
+}
+
+function chooseOperator(nextOperator) {
+  if (current === "Error") return;
+
+  const value = Number(current);
+
+  if (stored !== null && operator && !waitingForNumber) {
+    const answer = calculate(stored, value, operator);
+    current = format(answer);
+    stored = answer;
+  } else {
+    stored = value;
+  }
+
+  operator = nextOperator;
+  waitingForNumber = true;
+  justCalculated = false;
+  previousExpression = "";
+  render();
+}
+
+function equals() {
+  if (stored === null || !operator || current === "Error") return;
+
+  const a = stored;
+  const b = Number(current);
+  const op = operator;
+  const answer = calculate(a, b, op);
+
+  previousExpression = `${format(a)} ${symbol(op)} ${format(b)} =`;
+  current = format(answer);
+  stored = null;
+  operator = null;
+  waitingForNumber = true;
+  justCalculated = true;
+  render();
+}
+
+function toggleSign() {
+  if (current === "Error" || current === "0") return;
+  current = current.startsWith("-") ? current.slice(1) : "-" + current;
+  justCalculated = false;
+  render();
+}
+
+function percent() {
+  if (current === "Error") return;
+  current = format(Number(current) / 100);
+  justCalculated = false;
+  render();
+}
+
+function backspace() {
+  if (current === "Error" || justCalculated || waitingForNumber) {
+    current = "0";
+    justCalculated = false;
+    waitingForNumber = false;
+  } else {
+    current = current.length > 1
+      ? current.slice(0, -1)
+      : "0";
+
+    if (current === "-") current = "0";
+  }
+  render();
+}
+
+document.querySelector(".keys").addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button) return;
+
+  const { action, value } = button.dataset;
+
+  if (action === "digit") inputDigit(value);
+  if (action === "decimal") inputDecimal();
+  if (action === "operator") chooseOperator(value);
+  if (action === "equals") equals();
+  if (action === "clear") clearAll();
+  if (action === "sign") toggleSign();
+  if (action === "percent") percent();
+});
+
+document.addEventListener("keydown", (event) => {
+  const key = event.key;
+
+  if (/^[0-9]$/.test(key)) inputDigit(key);
+  else if (key === ".") inputDecimal();
+  else if (["+", "-", "*", "/"].includes(key)) chooseOperator(key);
+  else if (key === "Enter" || key === "=") {
+    event.preventDefault();
+    equals();
+  }
+  else if (key === "Escape") clearAll();
+  else if (key === "Backspace") backspace();
+  else if (key === "%") percent();
+});
+
+render();
+</script>
+</body>
+</html>
